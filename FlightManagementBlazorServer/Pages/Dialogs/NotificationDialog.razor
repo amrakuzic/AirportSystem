@@ -1,0 +1,40 @@
+﻿<link href="/css/notifDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog notif-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header notif-dialog">
+              <h3 id="notifTitle">Notification</h3>
+            </div>
+            <div class="modal-body notif-dialog">
+                <p id="msgP">@Description</p>
+            </div>
+            <div class="modal-footer notif-dialog">
+              <button type="button" @onclick="CloseDialog" class="btn btn-success" id="btnOk">OK</button>
+            </div>
+         </div>
+     </div>
+</div>
+
+}
+
+@code {
+
+    public bool ShowDialog{ get; set; }
+
+    [Parameter]
+    public string Description{ get; set; }
+
+    public void Show()
+    {
+        ShowDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseDialog()
+    {
+        ShowDialog = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,165 @@
+﻿@page "/ViewPassengers/{FlightId}"
+@inject PassengerService _passengerService;
+@inject FlightService _flightService;
+@inject DocumentService _documentService;
+@inject LuggageService _luggageService;
+@inject NavigationManager _navigationManager;
+@inject Data.LoginState loginState;
+<link href="/css/listPages.css" rel="stylesheet" />
+
+@if(Passengers != null && loginState.IsLoggedIn == true)
+{
+    <h3>Passengers for flight @Flight.Number</h3>
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+                <th>Document</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var passenger in Passengers)
+            {
+                DocumentFound = false;
+                if(passenger.FlightId == int.Parse(FlightId))
+                {
+                    <tr>
+                        <td>@passenger.FirstName</td>
+                        <td>@passenger.LastName</td>
+                        <td>@passenger.Gender</td>
+                        @foreach(var document in Documents)
+                        {
+                            if(document.PassengerId == passenger.Id)
+                            {
+                                <td>
+                                    <Tooltip Text="Check Document">
+                                        <button type="button" class="btn btn-success" @onclick="() => ViewDocument(document)">
+                                            <span class="oi oi-document"></span>
+                                        </button>
+                                    </Tooltip>
+                                </td>
+                                DocumentFound = true;
+                                break;
+                            }
+                        }
+                        @if (DocumentFound == false)
+                        {
+                            <td>
+                                <Tooltip Text="No Document Found">
+                                    <button type="button" class="btn btn-light">
+                                        <span class="oi oi-document"></span>
+                                    </button>
+                                </Tooltip>
+                            </td>
+                        }
+                        <td>
+                            <Tooltip Text="@editPassengerTooltip">
+                                <button type="button" class="btn btn-primary" @onclick="() => OpenEditPassengerDialog(passenger.Id)">
+                                    <span class="oi oi-pencil"></span>    
+                                </button>
+                            </Tooltip>
+
+                            <Tooltip Text="@deletePassengerTooltip">
+                                <button type="button" class="btn btn-danger" @onclick="() => DeletePassenger(passenger.Id)">
+                                <i class="oi oi-delete"></i>
+                            
+                                </button>
+                            </Tooltip>
+                        </td>
+                    </tr>                    
+                }
+
+            }
+            
+        </tbody>
+    </table>
+}
+else
+{
+    <div>Loading...</div>
+}
+
+<ConfirmationDialog @ref="DeleteConfirmationDialog" ConfirmationChanged="@OnDeleteConfirmationSelected" Question="Delete passenger?"></ConfirmationDialog>
+<AddPassengerDialog @ref="AddPassengerDialog"></AddPassengerDialog>
+<ViewDocumentDialog @ref="ViewDocumentDialog"></ViewDocumentDialog>
+<EditPassengerDialog @ref="EditPassengerDialog" ConfirmationChanged="@OnDialogFinished"></EditPassengerDialog>
+
+
+@code {
+    public string msg { get; set; }
+    private List<Passenger> Passengers;
+    private List<Document> Documents;
+    private List<Luggage> Luggages;
+    public EditPassengerDialog EditPassengerDialog { get; set; }
+    private string editPassengerTooltip = "Edit Passenger";
+    private string deletePassengerTooltip = "Delete Passenger";
+    public ConfirmationDialog DeleteConfirmationDialog{ get; set; }
+    public ConfirmationDialog ArchiveConfirmationDialog{ get; set; }
+    public AddPassengerDialog AddPassengerDialog { get; set; }
+    public ViewDocumentDialog ViewDocumentDialog { get; set; }
+    public int SelectedPassengerId{ get; set; }
+    public bool DocumentFound { get; set; }
+    public Document DocumentToShow { get; set; }
+    [Parameter]
+    public string FlightId{ get; set; }
+
+    public Flight Flight{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        //dohvatiti putnike sa stranim kljucem od pritisnutog leta
+        Passengers = await _passengerService.GetAllPassengersAsync();
+        Flight = await _flightService.GetFlightAsync(int.Parse(FlightId));
+        Documents = await _documentService.GetDocumentsAsync();
+        Luggages = await _luggageService.GetLuggagesAsync();
+        foreach(var pass in Passengers)
+        {
+            if (pass.FlightId == null)
+            {
+                await _passengerService.DeletePassengerAsync(pass.Id);
+            }
+        }
+    }
+
+
+    private async Task DeletePassenger(int passengerId)
+    {
+        SelectedPassengerId = passengerId;
+        DeleteConfirmationDialog.Show();
+    }
+
+    private void AddPassenger(Flight flight)
+    {
+        AddPassengerDialog.Show(flight);
+    }
+
+    private async Task ViewDocument(Document document)
+    {
+        DocumentToShow = await _documentService.GetDocumentAsync(document.Id);
+        ViewDocumentDialog.Show(DocumentToShow);
+    }
+
+    private async Task OnDeleteConfirmationSelected(bool isDeleteConfirmed)
+    {
+        if(isDeleteConfirmed)
+        {
+            var passenger = await _passengerService.GetPassengerAsync(SelectedPassengerId);  
+            await _passengerService.DeletePassengerAsync(passenger.Id);    
+        }
+        Passengers = await _passengerService.GetAllPassengersAsync();
+
+    }
+    protected async Task OnDialogFinished(bool finish)
+    {
+        if(finish)
+        {
+            Passengers = await _passengerService.GetPassengersAsync();            
+        }
+    }
+    protected async Task OpenEditPassengerDialog(int flightId)
+    {
+        await EditPassengerDialog.Show(flightId);
+    }
+}

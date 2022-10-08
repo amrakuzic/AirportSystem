@@ -1,0 +1,51 @@
+﻿@page "/CheckedPassengers/{FlightId}"
+@inject PassengerService _passengerService;
+@inject FlightService _flightService;
+@inject Data.LoginState loginState;
+<link href="/css/listPages.css" rel="stylesheet" />
+@if(Passengers != null && loginState.IsLoggedIn == true)
+{
+    <h3>Checked Passengers for flight @Flight.Number</h3>
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Gender</th>
+                <th>Seat</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var passenger in Passengers)
+            {
+                if(passenger.FlightId == int.Parse(FlightId))
+                {
+                    <tr>
+                        <td>@passenger.FirstName</td>
+                        <td>@passenger.LastName</td>
+                        <td>@passenger.Gender</td>
+                        <td>@passenger.Seat</td>
+                    </tr>                    
+                }
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div>Loading...</div>
+}
+@code {
+    private List<Passenger> Passengers;
+
+    [Parameter]
+    public string FlightId{ get; set; }
+
+    public Flight Flight{ get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Passengers = await _passengerService.GetCheckedPassengersAsync();
+        Flight = await _flightService.GetFlightAsync(int.Parse(FlightId));
+    }
+}

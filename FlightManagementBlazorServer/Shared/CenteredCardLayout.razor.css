@@ -1,0 +1,14 @@
+﻿img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20%;
+    width: 65%;
+    height: 65%;
+}
+
+.col-9.card {
+    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #265077 75%);
+    border-color: #022140;
+    border-width: 7px;
+}

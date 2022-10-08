@@ -1,0 +1,83 @@
+﻿@inject CarrierService _carrierService;
+<link href="/css/editDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+<div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog edit-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header edit-dialog" style="background-color:#98a4c5">
+                <h3 id="editTitle">Edit Carrier</h3>
+            </div>
+            <div class="modal-body" style="background-color:#98a4c5">
+                <div class="form-group">
+                        
+                    <EditForm Model="@Carrier">
+                        <CarrierFields Carrier="@Carrier"></CarrierFields>
+
+                    </EditForm>
+                </div>
+                <p id="notifMsg">@UnsuccessfulEdit</p>
+            </div>
+            <div class="modal-footer edit-dialog" style="background-color:#98a4c5">
+                        <button type="submit" class="btn btn-success" id="btnSuccess" @onclick="() => UpdateCarrierAsync(true)">
+                            <span class="oi oi-pencil"></span>
+                            Update Carrier
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnClose" @onclick="CloseDialog">
+                            <span class="oi oi-media-skip-backward"></span>
+                            Close
+                        </button>
+            </div>
+        </div>
+    </div>
+</div>    
+}
+
+@code {
+    public bool ShowDialog{ get; set; }
+
+    public string UnsuccessfulEdit { get; set; } 
+    public Carrier Carrier { get; set; }
+    [Parameter]
+    public EventCallback<bool> ConfirmationChanged{ get; set; }
+    public async Task Show(int carrierId)
+    {
+        Carrier = await _carrierService.GetCarrierAsync(carrierId);
+        ShowDialog = true;
+        StateHasChanged();
+    }
+    private void CloseDialog()
+    {
+        UnsuccessfulEdit = "";
+        ShowDialog = false;
+        StateHasChanged();
+    }
+    private async Task UpdateCarrierAsync(bool isUpdated)
+    {
+        var errors = ValidateCarrier();
+        errors = errors.Remove(errors.Length-1);
+        if(errors.Length<25)
+        {
+            await _carrierService.UpdateCarrierAsync(Carrier);
+            await ConfirmationChanged.InvokeAsync(isUpdated);
+            CloseDialog();            
+        }
+        else
+        {
+            UnsuccessfulEdit = errors;                        
+        }
+
+    }
+    private string ValidateCarrier()
+    {
+        var validationErrors = "Please enter valid: ";
+        if (String.IsNullOrWhiteSpace(Carrier.Name))
+            validationErrors += "Name,";
+
+        if (String.IsNullOrWhiteSpace(Carrier.Country))
+            validationErrors += "Country,";
+
+        return validationErrors;
+
+    }
+}

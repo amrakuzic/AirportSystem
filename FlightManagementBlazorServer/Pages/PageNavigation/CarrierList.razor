@@ -1,0 +1,88 @@
+﻿@page "/CarrierList"
+@inject Data.LoginState loginState;
+@inject CarrierService _carrierService;
+<link href="/css/listPages.css" rel="stylesheet" />
+
+<button type="button" class="btn btn-success" id="btnAdd" @onclick="OpenAddCarrierDialog">
+    <span class="oi oi-plus"></span>
+    Add Carrier
+</button>
+@if(Carriers != null  && loginState.IsLoggedIn==true)
+{
+    <h3>Carrier List</h3>
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var carrier in Carriers)
+            {
+                <tr>
+                    <td>@carrier.Name</td>
+                    <td>@carrier.Country</td>
+                    <td>
+                        <button type="button" class="btn btn-primary" @onclick="() => OpenEditCarrierDialog(carrier.Id)">
+                            <span class="oi oi-pencil"></span>
+                        </button>
+                        <button type="button" class="btn btn-danger" @onclick="() => DeleteCarrierAsync(carrier.Id)">
+                            <span class="oi oi-delete"></span>
+                        </button>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+else if (Carriers == null)
+{
+    <p>Loading...</p>
+}
+<EditCarrierDialog @ref="EditCarrierDialog" ConfirmationChanged="@OnDialogFinished"></EditCarrierDialog>
+<AddCarrierDialog @ref="AddCarrierDialog" ConfirmationChanged="@OnDialogFinished"></AddCarrierDialog>
+
+@code{
+    private NavigationManager _navigationManager { get; set; }
+    public List<Carrier> Carriers { get; set; }
+    public EditCarrierDialog EditCarrierDialog { get; set; }
+    public AddCarrierDialog AddCarrierDialog { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Carriers = await _carrierService.GetCarriersAsync();
+    }
+    protected void ShowAddCarrierPage()
+    {
+        _navigationManager.NavigateTo("/AddCarrier");
+    }
+
+    protected void OpenEditCarrierPage(int carrierId)
+    {
+        _navigationManager.NavigateTo($"/EditCarrier/{carrierId}");
+    }
+
+    protected async Task DeleteCarrierAsync(int carrierId)
+    {
+        await _carrierService.DeleteCarrierAsync(carrierId);
+        Carriers = await _carrierService.GetCarriersAsync();
+
+    }
+    protected async Task OpenEditCarrierDialog(int carrierId)
+    {
+        await EditCarrierDialog.Show(carrierId);
+    }
+    protected async Task OpenAddCarrierDialog()
+    {
+        await AddCarrierDialog.Show();
+    }
+    protected async Task OnDialogFinished(bool finish)
+    {
+        if(finish)
+        {
+            Carriers = await _carrierService.GetCarriersAsync();            
+        }
+    }
+}

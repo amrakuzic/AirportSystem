@@ -1,0 +1,124 @@
+﻿@using System.Text
+@inject PassengerService _passengerService;
+@inject LuggageService _luggageService;
+@inject NavigationManager _navigationManager;
+<link href="/css/addDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+<div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal-dialog add-dialog" role="document">
+<div class="modal-content">
+<div class="modal-header add-dialog" style="background-color:#98a4c5">
+    <h3 id="title">Add Passenger</h3>
+</div>
+<div class="modal-body" style="background-color:#98a4c5">
+    <div class="form-group">
+        <div class="list-group-item" style="background-color:#8dbcff">Passenger Info</div>
+        <div class="list-group-item" style="background-color:#a5caff">
+                        
+            <EditForm Model="@NewPassenger" OnValidSubmit="@CloseDialog">
+                <label>Flight Number: @Flight.Number</label>
+                <PassengerFields Passenger="@NewPassenger"></PassengerFields>
+            </EditForm>
+        </div>
+        <br>
+        <div class="list-group-item" style="background-color:#8dbcff">Luggage Info</div>
+        <div class="list-group-item" style="background-color:#a5caff">
+            <EditForm Model="@Luggage" OnValidSubmit="@CloseDialog">
+                <LuggageFields Luggage="@Luggage"></LuggageFields>
+            </EditForm>
+        </div>
+    </div>
+
+        <p id="loginMsg">@UnsuccessfulLogin</p>
+</div>
+<div class="modal-footer add-dialog" style="background-color:#98a4c5">
+        <button type="submit" class="btn btn-success" id="btnSuccess" @onclick="AddPassengerAsync">
+            <span class="oi oi-pencil"></span>
+            Add Passenger
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnClose" @onclick="CloseDialog">
+            <span class="oi oi-media-skip-backward"></span>
+            Close
+        </button>
+</div>
+</div>
+</div>
+</div>
+}
+<NotificationDialog @ref="NotificationDialog" Description="@ConcatenatedValidationErrors"></NotificationDialog>
+@code {
+
+    public bool ShowDialog{ get; set; }
+
+    [Parameter]
+    public string FlightNumber{ get; set; }
+    public Passenger NewPassenger { get; set; }
+    public Luggage Luggage { get; set; }
+    [Parameter]
+    public Flight Flight { get; set; }
+    public string UnsuccessfulLogin { get; set; }
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+
+    protected bool IsDisabled { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        NewPassenger = new Passenger();
+        // kreira instancu Luggage modela direktno povezan sa instancom Passenger modela kako bi mogli dodijeliti Luggage instanci PassengerId!!!
+        Luggage = new Luggage{Passenger = NewPassenger};
+    }
+
+    public void Show(Flight flight)
+    {
+        Flight = flight;
+        ShowDialog = true;
+        StateHasChanged();
+    }
+
+    private async Task AddPassengerAsync()
+    {
+        var errors = ValidatePassenger();
+        errors = errors.Remove(errors.Length-1);
+        if(errors.Length<25)
+        {
+            NewPassenger.FlightId = Flight.Id;
+            //await _passengerService.AddPassengerAsync(NewPassenger);
+            Luggage.PassengerId = NewPassenger.Id;
+            await _luggageService.AddLuggageAsync(Luggage);
+            CloseDialog();
+        }
+        else
+        {
+            UnsuccessfulLogin = errors;
+        }
+    }
+
+    private string ValidatePassenger()
+    {
+        var validationErrors = "Please enter valid: ";
+        if (String.IsNullOrWhiteSpace(NewPassenger.FirstName))
+            validationErrors += "FirstName,";
+
+        if (String.IsNullOrWhiteSpace(NewPassenger.LastName))
+            validationErrors += "LastName,";
+
+        if (NewPassenger.Gender == null)
+            validationErrors += "Gender,";
+
+        if (String.IsNullOrWhiteSpace(Luggage.Count.ToString()) || Luggage.Count<0)
+            validationErrors += "Luggage count,";
+
+
+        return validationErrors;
+
+    }
+    private void CloseDialog()
+    {
+        ShowDialog = false;
+        UnsuccessfulLogin = "";
+        StateHasChanged();
+        _navigationManager.NavigateTo("/FlightList");
+    }
+}

@@ -1,0 +1,107 @@
+﻿@using System.Text
+@inject PassengerService _passengerService;
+@inject DocumentService _documentService;
+@inject NavigationManager _navigationManager;
+<link href="/css/addDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog add-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header add-dialog" style="background-color:#98a4c5">
+                <h3 id="title">Document Info</h3>
+            </div>
+            <div class="modal-body add-dialog" style="background-color:#98a4c5">
+                <EditForm Model="@Document" OnValidSubmit="@CloseDialog">
+                    <DocumentFields Document="@Document"></DocumentFields>
+                </EditForm>
+                <p id="loginMsg">@UnsuccessfulLogin</p>
+            </div>
+            <div class="modal-footer add-dialog" style="background-color:#98a4c5">
+                    <button type="submit" class="btn btn-success" id="btnSuccess" @onclick="AddDocumentAsync">
+                        <span class="oi oi-pencil"></span>
+                        Add Document
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btnClose" @onclick="CloseDialog">
+                        <span class="oi oi-media-skip-backward"></span>
+                        Close
+                    </button>
+            </div>
+         </div>
+     </div>
+</div>
+}
+@code {
+
+    public bool ShowDialog{ get; set; }
+
+
+    [Parameter]
+    public Passenger Passenger { get; set; }
+
+    public Document Document { get; set; }
+    public string UnsuccessfulLogin { get; set; }
+    //za vratiti document u checkPassengerList
+    [Parameter] public EventCallback<Document> OnDoneCallback { get; set; }
+
+    protected bool IsDisabled { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        // kreira instancu Luggage modela direktno povezan sa instancom Passenger modela kako bi mogli dodijeliti Luggage instanci PassengerId!!!
+        Document = new Document{Passenger = Passenger};
+    }
+
+    public void Show(Passenger passenger)
+    {
+        Passenger = passenger;
+        ShowDialog = true;
+        StateHasChanged();
+    }
+
+    public async Task Done()
+    {
+        await InvokeAsync(() => OnDoneCallback.InvokeAsync(Document));              
+    }
+    private async Task AddDocumentAsync()
+    {
+        var errors = ValidateDocument();
+        errors = errors.Remove(errors.Length-1);
+        if(errors.Length<22)
+        {
+            Document.PassengerId = Passenger.Id;
+            await Done();
+            CloseDialog(); 
+        }
+        else
+        {
+            UnsuccessfulLogin = errors;
+        }
+    }
+
+    private string ValidateDocument()
+    {
+        var validationErrors = "Please insert:";
+        if (String.IsNullOrWhiteSpace(Document.FirstName))
+            validationErrors += "FirstName,";
+
+        if (String.IsNullOrWhiteSpace(Document.LastName))
+            validationErrors += "LastName,";
+
+        if (String.IsNullOrWhiteSpace(Document.Type))
+            validationErrors += "Type,";
+
+        if (String.IsNullOrWhiteSpace(Document.ExpirationDate.ToString()))
+            validationErrors += "ExpirationDate,";
+
+        if (String.IsNullOrWhiteSpace(Document.Number.ToString()))
+            validationErrors += "Number,";            
+        return validationErrors;
+
+    }
+    private void CloseDialog()
+    {
+        UnsuccessfulLogin = "";
+        ShowDialog = false;
+        StateHasChanged();
+    }
+}

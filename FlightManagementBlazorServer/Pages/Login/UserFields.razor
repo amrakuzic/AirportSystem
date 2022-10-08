@@ -1,0 +1,42 @@
+﻿@inject UserService _userService;
+@inject RoleService _roleService;
+
+<link href="FlightManagementBlazorServer.styles.css" rel="stylesheet" />
+@if(Roles!=null)
+{
+    <div class="userFields">
+
+        <label for="userUsername">Username
+        </label>
+        <InputText id="userUsername" @bind-Value="@User.Username" class="form-control" placeholder="username"></InputText>
+
+        <label for="userPassword">Password
+        </label>
+        <input type="text" id="userPassword" @bind="User.Password" class="form-control" placeholder="password" />
+
+        <label for="userType">Role
+        </label>
+        <InputSelect id="Roles" @bind-Value="User.RoleId" placeholder="Select" class="form-control">
+            @foreach(var role in Roles)
+            {
+                <option value="@role.Id">@role.Type</option>
+            }
+        </InputSelect>
+</div>
+}
+else
+{
+    <p>Loading . . .</p>
+}
+
+
+@code {
+    [Parameter]
+    public User User { get; set; }
+    public List<Role> Roles{ get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Roles = await _roleService.GetRolesAsync();
+    }
+}

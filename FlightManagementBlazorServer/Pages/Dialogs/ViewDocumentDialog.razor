@@ -1,0 +1,70 @@
+﻿@using System.Text
+@inject PassengerService _passengerService;
+@inject DocumentService _documentService;
+@inject NavigationManager _navigationManager;
+
+@if(ShowDialog)
+{
+    <div class="modal fade show d-block" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm" role="document">
+          <div class="modal-content">
+            <div class="modal-header" style="background-color:#98a4c5;">
+                <h4 style="width:100%;text-align:center">Document Info</h4>
+              <button type="button" @onclick="CloseDialog" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body" style="background-color:#98a4c5; display: flex; justify-content: center;">
+                <ul class="list-group" style="width:200px; position:center"> 
+                  <li class="list-group-item">First Name: @Document.FirstName</li>
+                  <li class="list-group-item">Last Name: @Document.LastName</li>
+                  <li class="list-group-item">Number: @Document.Number</li>
+                  <li class="list-group-item">Expiration Date: @Document.ExpirationDate.ToString("dd/mm/yyyy")</li>
+                </ul>
+            </div>
+            <div class="modal-footer" style="background-color:#98a4c5; display: flex; justify-content: center;">
+                    <button type="button" class="btn btn-success" @onclick="CloseDialog">
+                        Ok
+                    </button>
+            </div>
+         </div>
+     </div>
+</div>
+}
+<NotificationDialog @ref="NotificationDialog" Description="@ConcatenatedValidationErrors"></NotificationDialog>
+@code {
+
+    public bool ShowDialog{ get; set; }
+
+
+    [Parameter]
+    public Document Document { get; set; }
+
+    public NotificationDialog NotificationDialog{ get; set; }
+    public List<ValidationError> ValidationErrors{ get; set; }
+    public String ConcatenatedValidationErrors{ get; set; }
+
+    //za vratiti document u checkPassengerList
+    [Parameter] public EventCallback<Document> OnDoneCallback { get; set; }
+
+    protected bool IsDisabled { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        // kreira instancu Luggage modela direktno povezan sa instancom Passenger modela kako bi mogli dodijeliti Luggage instanci PassengerId!!!
+        Document = new Document();
+    }
+
+    public void Show(Document document)
+    {
+        Document = document;
+        ShowDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseDialog()
+    {
+        ShowDialog = false;
+        StateHasChanged();
+    }
+
+}

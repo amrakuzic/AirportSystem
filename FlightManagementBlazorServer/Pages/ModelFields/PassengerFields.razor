@@ -1,0 +1,29 @@
+﻿@inject PassengerService _passengerService;
+@inject FlightService _flightService;
+<link href="/css/edit.css" rel="stylesheet" />
+@if(true)
+{
+    <div class="passengerFields" style="padding:1%">
+
+        <label for="passengerName">First Name
+        </label>
+        <InputText id="passengerName" @bind-Value="@Passenger.FirstName" class="form-control"></InputText>
+
+        <label for="passengerSurname">Last Name
+        </label>
+        <InputText id="passengerSurname" @bind-Value="@Passenger.LastName" class="form-control"></InputText>
+        <label for="passengerGender">Gender
+        </label>        
+        <InputSelect id="passengerGender" @bind-Value="Passenger.Gender" class="form-control">
+            <option >Select ...</option>            
+            <option value="M">M</option>
+            <option value="F">F</option>            
+        </InputSelect>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public Passenger Passenger { get; set; }
+}

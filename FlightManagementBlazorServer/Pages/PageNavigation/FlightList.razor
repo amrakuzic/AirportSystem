@@ -1,0 +1,230 @@
+﻿@page "/FlightList"
+@using FlightManagementBlazorServer.Services
+@inject FlightService _flightService;
+@inject Data.LoginState loginState;
+@inject NavigationManager _navigationManager;
+
+@if(Flights == null || loginState.IsLoggedIn==false)
+{
+    <div>Loading...</div>
+}
+else
+{
+
+    if(loginState.Role=="admin")
+    {
+        <button type="button" class="btn btn-primary" id="btnAdd" @onclick="OpenAddFlightDialog">
+            <span class="oi oi-plus"></span>
+            Add Flight
+        </button>
+    }
+    else
+    {
+        <button type="button" class="btn btn-secondary">
+            <span class="oi oi-plus"></span>
+            Add Flight
+        </button>        
+    }
+    <h3>Flights</h3>
+    <table class="table table-dark">
+        <thead>
+            <tr>
+                <th>
+                    <button type="button" class="btn btn-primary" style="width: 100%">
+                        <img src="images/plane.png" alt="Image">
+                    </button>
+                </th>
+                <th>Number</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Carrier</th>
+                <th>Airport to</th>
+                <th>
+                    <button type="button" class="btn btn-secondary" style="width: 100%">
+                        <span class="oi oi-person"></span>
+                    </button>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var flight in Flights)
+            {
+                <tr>
+                    @if (loginState.Role == "admin")
+                    {
+                        <td>
+                            <Tooltip Text="@editFlightTooltip">
+                                <button type="button" class="btn btn-primary" @onclick="() => OpenEditFlightDialog(flight.Id)">
+                                    <span class="oi oi-pencil"></span>    
+                                </button>
+                            </Tooltip>
+
+
+                            <Tooltip Text="@deleteFlightTooltip">
+                                <button type="button" class="btn btn-danger" @onclick="() => DeleteFlight(flight.Id)">
+                                    <span class="oi oi-delete"></span>
+                                </button>
+                            </Tooltip>
+                            <Tooltip Text="@archiveFlightTooltip">
+                                <button type="button" class="btn btn-secondary" @onclick="() => ArchiveFlight(flight.Id)">
+                                    <span class="oi oi-transfer"></span>
+                                </button>
+                            </Tooltip>
+
+                        </td>
+                    }
+                    else
+                    {
+                        <td>
+                            <button type="button" class="btn btn-secondary">
+                                <span class="oi oi-pencil"></span>
+                            </button>
+                            <button type="button" class="btn btn-secondary">
+                                <span class="oi oi-delete"></span>
+                            </button>
+                            <button type="button" class="btn btn-secondary">
+                                <span class="oi oi-transfer"></span>
+                            </button>
+                        </td>
+                    }
+
+                    <td>@flight.Number</td>
+                    <td>@flight.FlightDate.ToString("dd.MM.yyyy")</td>
+                    <td>@flight.FlightTime</td>
+                    <td>@flight.Carrier?.Name</td>
+                    <td>@flight.AirportTo</td>
+                    <td>
+                        @if(loginState.IsLoggedIn==true && loginState.Role=="admin")
+                        {
+                        <Tooltip Text="@addPassengerTooltip">
+                                <button type="button" class="btn btn-success" @onclick="() => AddPassenger(flight)">
+                                <i class="oi oi-plus"></i>
+                                </button>
+                        </Tooltip>                             
+                        }
+
+
+
+                        <Tooltip Text="@viewPassengersTooltip">
+                        <button type="button" class="btn btn-info" @onclick="() => OpenViewPassengerPage(flight.Id)">
+                            <i class="oi oi-people"></i>
+                        </button>
+                        </Tooltip>
+                        <Tooltip Text="Check Passengers">
+                            <button type="button" class="btn btn-warning" @onclick="() => OpenCheckPassengerPage(flight.Id)">
+                                <span class="oi oi-flag"></span>
+                            </button>
+                        </Tooltip>
+                        <Tooltip Text="Checked Passengers">
+                            <button type="button" class="btn btn-warning" @onclick="() => OpenCheckedPassengerPage(flight.Id)">
+                                <span class="oi oi-check"></span>
+                            </button>
+                        </Tooltip>
+                    </td>
+                </tr>
+            }
+            
+        </tbody>
+    </table>
+
+}
+
+
+<ConfirmationDialog @ref="DeleteConfirmationDialog" ConfirmationChanged="@OnDeleteConfirmationSelected" Question="If you delete selected flight, all passengers added to this flight will also be deleted. Are you sure you want to delete flight?"></ConfirmationDialog>
+<ConfirmationDialog @ref="ArchiveConfirmationDialog" ConfirmationChanged="@OnArchiveConfirmationSelected" Question="Archive flight?"></ConfirmationDialog>
+<AddPassengerDialog @ref="AddPassengerDialog"></AddPassengerDialog>
+<EditFlightDialog @ref="EditFlightDialog" ConfirmationChanged="@OnDialogFinished"></EditFlightDialog>
+<AddFlightDialog @ref="AddFlightDialog" ConfirmationChanged="@OnDialogFinished"></AddFlightDialog>
+
+@code {
+    private List<Flight> Flights;
+    public EditFlightDialog EditFlightDialog { get; set; }
+    public AddFlightDialog AddFlightDialog { get; set; }
+    private string addPassengerTooltip = "Add Passenger";
+    private string viewPassengersTooltip = "View Passengers";
+    private string editFlightTooltip = "Edit Flight";
+    private string deleteFlightTooltip = "Delete Flight";
+    private string archiveFlightTooltip = "Archive Flight";
+    public ConfirmationDialog DeleteConfirmationDialog{ get; set; }
+    public ConfirmationDialog ArchiveConfirmationDialog{ get; set; }    
+
+    public int SelectedFlightId{ get; set; }
+
+
+    public AddPassengerDialog AddPassengerDialog { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Flights = await _flightService.GetFlights();
+    }
+
+    private void OpenAddFlightPage()
+    {
+        _navigationManager.NavigateTo("/AddFlight");
+    }
+    private void OpenAdminPage()
+    {
+        _navigationManager.NavigateTo("/Admin");
+    }
+    private void OpenViewPassengerPage(int flightId)
+    {
+        _navigationManager.NavigateTo($"/ViewPassengers/{flightId}");
+    }
+
+    private void OpenCheckPassengerPage(int flightId)
+    {
+        _navigationManager.NavigateTo($"/CheckPassengers/{flightId}");
+    }
+
+    private void OpenCheckedPassengerPage(int flightId)
+    {
+        _navigationManager.NavigateTo($"/CheckedPassengers/{flightId}");
+    }
+    private void AddPassenger(Flight flight)
+    {
+        AddPassengerDialog.Show(flight);
+    }
+    private async Task DeleteFlight(int flightId)
+    {
+        SelectedFlightId = flightId;
+        DeleteConfirmationDialog.Show();
+    }
+
+    private async Task OnDeleteConfirmationSelected(bool isDeleteConfirmed)
+    {
+        if(isDeleteConfirmed)
+        {
+            await _flightService.DeleteFlight(SelectedFlightId);
+            Flights = await _flightService.GetFlights();
+        }
+    }
+
+    private async Task OnArchiveConfirmationSelected(bool isArchiveConfirmed)
+    {
+        if(isArchiveConfirmed)
+        {
+            await _flightService.ArchiveFlight(SelectedFlightId);
+            Flights = await _flightService.GetFlights();
+        }
+    }
+
+    private async Task ArchiveFlight(int flightId)
+    {
+        SelectedFlightId = flightId;
+        ArchiveConfirmationDialog.Show();
+    }
+    protected async Task OpenEditFlightDialog(int flightId)
+    {
+        await EditFlightDialog.Show(flightId);
+    }
+    protected async Task OpenAddFlightDialog()
+    {
+        await AddFlightDialog.Show();
+    }
+    protected async Task OnDialogFinished(bool finish)
+    {
+        if(finish)
+        {
+            Flights = await _flightService.GetFlights();            
+        }
+    }
+}

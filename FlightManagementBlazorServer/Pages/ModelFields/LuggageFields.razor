@@ -1,0 +1,24 @@
+﻿@inject PassengerService _passengerService;
+@inject LuggageService _luggageService;
+<link href="/css/addDialog.css" rel="stylesheet" />
+@if(true)
+{
+<div class="luggageFields" style="padding:1%">
+
+    <label for="luggageCount">Count
+    </label>
+    <InputNumber id="luggageCount" @bind-Value="Luggage.Count" class="form-control"></InputNumber>
+
+
+    <label for="luggageWeight">Weight(kg)
+    </label>
+        <InputNumber id="luggageWeight" @bind-Value="@Luggage.Weight" class="form-control"></InputNumber>
+    </div>
+}
+
+
+@code {
+[Parameter]
+public Luggage Luggage { get; set; }
+
+}

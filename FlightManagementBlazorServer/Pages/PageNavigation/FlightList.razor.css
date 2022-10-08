@@ -1,0 +1,32 @@
+﻿body {
+}
+
+#btnAdd {
+    width: 10%;
+    background-color: #5cb85c;
+    border: 3px outset;
+    border-color: dimgrey;
+    margin-bottom: 10px;
+    border-radius: 5%;
+}
+#btnAdd:hover {
+    background-color: grey;
+    color: white;
+}
+
+h3 {
+    color: white;
+    text-align: center;
+    background-color: #022140;
+    font-weight: bold;
+    margin: 0;
+    padding: 15px 0px 15px 0px;
+    border: 3px outset;
+    border-color: dimgrey;
+}
+td {
+    text-align: center;
+}
+th {
+    text-align: center;
+}

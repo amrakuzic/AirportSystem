@@ -1,0 +1,94 @@
+﻿@inject FlightService _FlightService;
+<link href="/css/addDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+<div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog add-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header add-dialog">
+                <h3 id="title">Add Flight</h3>
+            </div>
+            <div class="modal-body" style="background-color:#98a4c5">
+                <div class="form-group">
+                        
+                    <EditForm Model="@Flight">
+                        <FlightFields Flight="@Flight"></FlightFields>
+
+                    </EditForm>
+                </div>
+                <p id="loginMsg">@UnsuccessfulLogin</p>
+            </div>
+            <div class="modal-footer add-dialog" style="background-color:#98a4c5">
+                        <button type="submit" class="btn btn-success" id="btnSuccess" @onclick="() => AddFlightAsync(true)">
+                            <span class="oi oi-pencil"></span>
+                            Add Flight
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnClose" @onclick="CloseDialog">
+                            <span class="oi oi-media-skip-backward"></span>
+                            Close
+                        </button>
+            </div>
+        </div>
+    </div>
+</div>    
+}
+
+@code {
+    public bool ShowDialog{ get; set; }
+
+    public string UnsuccessfulLogin { get; set; } 
+    public Flight Flight { get; set; }
+    [Parameter]
+    public EventCallback<bool> ConfirmationChanged{ get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        Flight = new Flight();
+        Flight.FlightDate = DateTime.Now;
+    }
+    public async Task Show()
+    {
+        ShowDialog = true;
+        StateHasChanged();
+    }
+    private void CloseDialog()
+    {
+        UnsuccessfulLogin = "";
+        ShowDialog = false;
+        StateHasChanged();
+    }
+    private async Task AddFlightAsync(bool isAdded)
+    {
+        var errors = ValidateFlight();
+        errors = errors.Remove(errors.Length-1);
+        if(errors.Length<25)
+        {
+            await _FlightService.AddFlightAsync(Flight);
+            await ConfirmationChanged.InvokeAsync(isAdded);
+            CloseDialog();           
+        }
+        else
+        {
+            UnsuccessfulLogin = errors;
+        }
+
+    }
+    private string ValidateFlight()
+    {
+        var validationErrors = "Please enter valid: ";
+        if (String.IsNullOrWhiteSpace(Flight.Number))
+            validationErrors += "flight number,";
+
+        if (String.IsNullOrWhiteSpace(Flight.AirportTo))
+            validationErrors += "airportTo,";
+
+        if (Flight.CarrierId == null)
+            validationErrors += "carrier,";
+
+        if (String.IsNullOrWhiteSpace(Flight.FlightTime))
+            validationErrors += "flightTime,";
+
+        return validationErrors;
+
+    }
+
+}

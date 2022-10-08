@@ -1,0 +1,80 @@
+﻿@inject PassengerService _PassengerService;
+<link href="/css/editDialog.css" rel="stylesheet" />
+@if(ShowDialog)
+{
+<div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog edit-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header edit-dialog">
+                <h3 id="editTitle">Edit Passenger</h3>
+            </div>
+            <div class="modal-body" style="background-color:#98a4c5">
+                <div class="form-group">
+                        
+                    <EditForm Model="@Passenger">
+                        <PassengerFields Passenger="@Passenger"></PassengerFields>
+
+                    </EditForm>
+                </div>
+                <p id="notifMsg">@UnsuccessfulEdit</p>
+            </div>
+            <div class="modal-footer edit-dialog" style="background-color:#98a4c5">
+                        <button type="submit" class="btn btn-success" id="btnSuccess" @onclick="() => UpdatePassengerAsync(true)">
+                            <span class="oi oi-pencil"></span>
+                            Update Passenger
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btnClose" @onclick="CloseDialog">
+                            <span class="oi oi-media-skip-backward"></span>
+                            Close
+                        </button>
+            </div>
+        </div>
+    </div>
+</div>    
+}
+
+@code {
+    public bool ShowDialog{ get; set; }
+    public string UnsuccessfulEdit { get; set; } 
+
+    public Passenger Passenger { get; set; }
+    [Parameter]
+    public EventCallback<bool> ConfirmationChanged{ get; set; }
+    public async Task Show(int PassengerId)
+    {
+        Passenger = await _PassengerService.GetPassengerAsync(PassengerId);
+        ShowDialog = true;
+        StateHasChanged();
+    }
+    private void CloseDialog()
+    {
+        UnsuccessfulEdit = "";
+        ShowDialog = false;
+        StateHasChanged();
+    }
+    private async Task UpdatePassengerAsync(bool isUpdated)
+    {
+        var errors = ValidatePassenger();
+        errors = errors.Remove(errors.Length-1);
+        if(errors.Length<25)
+        {
+            await _PassengerService.UpdatePassengerAsync(Passenger);
+            await ConfirmationChanged.InvokeAsync(isUpdated);
+            CloseDialog();            
+        }
+        else
+        {
+            UnsuccessfulEdit = errors;                        
+        }
+    }
+    private string ValidatePassenger()
+    {
+        var validationErrors = "Please enter valid: ";
+        if (String.IsNullOrWhiteSpace(Passenger.FirstName))
+            validationErrors += "FirstName,";
+
+        if (String.IsNullOrWhiteSpace(Passenger.LastName))
+            validationErrors += "LastName,";
+        return validationErrors;
+    }
+}

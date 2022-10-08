@@ -1,0 +1,78 @@
+﻿@page "/admin"  
+@inject Data.LoginState loginState;
+@inject UserService _userService;
+@inject RoleService _roleService;
+
+@if(loginState.IsLoggedIn==true && loginState.Role=="admin")
+{
+<div class="container" style="width:15%; position:fixed;">
+    <EditForm Model="@User"  OnValidSubmit="@AddUser">
+        <UserFields User="@User"></UserFields>
+        <button type="submit" class="btn btn-success" @onclick="AddUser">
+            <span class="oi-pencil"></span>
+            Add User
+        </button>
+        <p style="color:red;text-emphasis;">@UnsuccessfulLogin</p>
+        <p style="color:green;text-emphasis;margin-top:-10px;">@SuccessfulLogin</p>
+    </EditForm>
+</div>
+
+}
+else
+{
+<p>You shall not pass!</p>
+}
+
+@code{
+public User User{ get; set; }
+public List<User> Users { get; set; }
+public string UnsuccessfulLogin { get; set; }
+public string SuccessfulLogin { get; set; }
+
+protected override async Task OnInitializedAsync()
+{
+    User = new User();
+
+}
+private async Task AddUser()
+{
+    var errormsg = ValidateInput();
+    if(errormsg.Length>0)
+    {
+        UnsuccessfulLogin = errormsg;
+    }
+    else
+    {
+        Users = await _userService.GetUsersAsync();
+        var noUserFound = true;
+        foreach(var user in Users)
+        {
+            if(user.Username == User.Username)
+            {
+                noUserFound = false;
+                break;
+            }
+        }
+        if (noUserFound == true)
+        {
+            await _userService.AddUserAsync(User);
+            SuccessfulLogin = "User added!";
+            UnsuccessfulLogin = "";
+        }
+        else
+        {
+            UnsuccessfulLogin = "User already exists!";
+        }
+    }
+}
+private string ValidateInput()
+{
+    var errorMessage = "";
+    if (String.IsNullOrWhiteSpace(User.Username) || User.Username.Length < 4)
+        errorMessage = "Invalid User!";
+
+    if (String.IsNullOrWhiteSpace(User.Password) || User.Password.Length<4)
+        errorMessage = "Invalid Password!";
+    return errorMessage;
+}
+}

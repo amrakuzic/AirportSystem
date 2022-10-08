@@ -1,0 +1,29 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager _navigationManager;
+@inject Data.LoginState loginState;
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4">
+            <div style="color:white">Hello, @loginState.User.Username!</div>
+            <a href="/" @onclick="(() => Logout())">Logout</a>
+
+        </div>
+
+        <div class="content px-4">
+            @Body
+
+        </div>
+    </div>
+</div>
+
+@code{
+    public async Task Logout()
+    {
+        _navigationManager.NavigateTo("/");
+    }
+}

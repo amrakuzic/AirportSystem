@@ -1,0 +1,42 @@
+﻿#btnOk {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.modal-footer.notif-dialog {
+    padding: 0;
+    height: 50px;
+}
+
+#notifTitle {
+    background-color: #0275d8;
+    text-align: center;
+    color: white;
+    width: 100%;
+    height: 100%;
+    height: fit-content;
+    border-bottom: 3px outset;
+    border-color: #d5bc2c;
+    padding: 15px 0 15px 0;
+    margin: 0;
+}
+
+.modal-header.notif-dialog {
+    padding: 0;
+    background-color: #98a4c5;
+}
+
+.modal-dialog.notif-dialog {
+    border: 3px outset;
+    border-color: #0275d8;
+    border-radius: 2%;
+}
+
+.modal-body.notif-dialog {
+    background-color: #98a4c5;
+
+}
+#msgP {
+    color: white;
+}

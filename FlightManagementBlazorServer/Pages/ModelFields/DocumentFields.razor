@@ -1,0 +1,40 @@
+﻿<link href="/css/edit.css" rel="stylesheet" />
+@inject DocumentService _documentService;
+@if(true)
+{
+    <div class="passengerFields" style="padding:1%">
+
+        <label for="passengerName">First Name
+        </label>
+        <InputText id="documentName" @bind-Value="@Document.FirstName" class="form-control"></InputText>
+
+        <label for="documentSurname">Last Name
+        </label>
+        <InputText id="documentSurname" @bind-Value="@Document.LastName" class="form-control"></InputText>
+
+        <label for="documentType">Type
+        </label>
+        <InputSelect id="documentType" @bind-Value="Document.Type" class="form-control">
+            <option>Select...</option>
+            <option value="Passport">Passport</option>
+            <option value="ID">ID</option>            
+        </InputSelect>
+        <label for="documentNumber">Number
+        </label>
+        <InputNumber id="documentNumber" @bind-Value="@Document.Number" class="form-control"></InputNumber>
+        <label for="documentExpirationDate">Expiration Date
+        </label>
+        <InputDate id="documentExpirationDate" @bind-Value="@Document.ExpirationDate" class="form-control"></InputDate>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public Document Document { get; set; }
+
+    protected override void OnInitialized()
+    {
+       Document.ExpirationDate = DateTime.Now;
+    }
+}

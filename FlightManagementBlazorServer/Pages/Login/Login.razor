@@ -1,0 +1,130 @@
+﻿@page  "/"
+@layout CenteredCardLayout
+@inject NavigationManager _navigationManager
+@inject Data.LoginState loginState;
+@inject UserService _userService;
+@inject RoleService _roleService;
+
+@if (loginState.IsLoggedIn.Equals(false))
+{
+<EditForm Model="@User">
+        <div id="right">
+        <div>
+                <br /><br /><br />
+            </div>
+            <div>
+                <h3>Flight Management</h3>
+            </div>
+            <div>
+                <br />
+            </div>
+            <div class="col-12 row">
+                <input class="form-control col-12" @bind="User.Username" placeholder="username" />
+            </div>
+            <br />
+            <div class="col-12 row" style="margin-bottom:0;">
+                <input type="password" class="form-control col-12" @bind="User.Password" placeholder="password" />
+            </div>
+            <div class="col-12 row" style="text-align:left; font-weight:bold; color:red; margin:0;padding:0;" >
+                <span class="col-12">@LoginMesssage</span>
+            </div>
+            <br>
+            <div class="col-12 row">
+                <span class="col-12"></span>
+                <button type="button" class="btn btn-success" @onclick="() => ValidateLogin(User)">
+                    Login
+                </button>
+            </div>
+            <br />
+
+        </div>     
+
+</EditForm>
+}
+else
+{
+<div style="text-align:center">
+    <br><br><br><br>
+    <button class="btn btn-success "type="submit" @onclick=@HandleLogout>
+        Click To Login
+    </button>
+</div>    
+}
+
+
+@code {
+    public User User { get; set; }
+    public User UserNew{ get; set; }
+    public Role Role { get; set; }
+    public Role Role2 { get; set; }
+    public List<User> Users { get; set; }
+    public List<Role> Roles { get; set; }
+    public string LoginMesssage { get; set; }
+
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        User = new User();
+        Role = new Role();
+        Role2 = new Role();
+        Roles = await _roleService.GetRolesAsync();
+
+        if(Roles.Count == 0)
+        {
+            Role.Type = "admin";
+            Roles = await _roleService.GetRolesAsync();
+            UserNew = new User{Role=Role};
+            UserNew.Username = "admin";
+            UserNew.Password = "admin";
+            await _userService.AddUserAsync(UserNew);
+            Role2.Type = "checkin";
+            await _roleService.AddRoleAsync(Role2);
+
+        }
+    }
+
+    protected async Task ValidateLogin(User user)
+    {
+        try
+        {
+            Users = await _userService.GetUsersAsync();
+            foreach (var savedUser in Users)
+            {
+                //LoginMesssage += savedUser.Username;
+                if(User.Username == savedUser.Username && User.Password == savedUser.Password)
+                {
+                    loginState.IsLoggedIn = true;
+                    loginState.User = User;
+                    loginState.User.Username = User.Username;
+                    loginState.User.Password = User.Password;
+                    if (savedUser.Role.Type == "admin")
+                    {
+                        loginState.Role = savedUser.Role.Type.ToString();
+                    }
+                    else
+                        loginState.Role = "checkin";
+                    _navigationManager.NavigateTo("/FlightList");
+                }
+                else
+                {
+                    LoginMesssage = "Account not found!";    
+                }
+            }
+    }
+    catch (System.Exception)
+    {
+        //
+            
+    }
+    StateHasChanged();
+}
+void HandleLogout()
+{
+    loginState.User.Username = "";
+    loginState.User.Password = "";
+    loginState.SetLogin(false, loginState.User=null);
+}
+}

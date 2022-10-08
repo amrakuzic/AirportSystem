@@ -1,0 +1,44 @@
+﻿<link href="/css/confirmDialog.css" rel="stylesheet" />
+
+@if(ShowDialog)
+{
+    <div class="modal fade show d-block" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog conf-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header conf-dialog">
+              <h3 id="titleNotif">Warning</h3>
+            </div>
+            <div class="modal-body conf-dialog">
+              <p id="msgP">@Question</p>
+            </div>
+            <div class="modal-footer conf-dialog">
+              <button type="button" @onclick="() => OnConfirmationChanged(true)" class="btn btn-primary" id="btnSuccess">Yes</button>
+              <button type="button" @onclick="() => OnConfirmationChanged(false)" class="btn btn-secondary" id="btnClose" data-dismiss="modal">No</button>
+            </div>
+          </div>
+        </div>
+</div>
+
+}
+
+@code {
+    public bool ShowDialog { get; set; }
+
+    public void Show()
+    {
+        ShowDialog = true;
+        StateHasChanged();
+    }
+
+    [Parameter]
+    public EventCallback<bool> ConfirmationChanged{ get; set; }
+
+    [Parameter]
+    public string Question { get; set; }
+
+    public async Task OnConfirmationChanged(bool isConfirmed)
+    {
+        ShowDialog = false;
+        await ConfirmationChanged.InvokeAsync(isConfirmed);
+    }
+}
